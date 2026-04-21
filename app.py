@@ -1,6 +1,6 @@
 """
 NetShield AI — Behavior-Aware Network Detection & Response System
-Backend: Flask + SocketIO + psutil + Scapy DPI
+Backend: Flask + SocketIO + psutil + Scapy DPI + UBNAD Behavioral Analysis
 """
 
 import os
@@ -24,6 +24,9 @@ from network_scanner import (
     SCAPY_AVAILABLE,
 )
 
+# UBNAD Behavioral Analysis Integration
+from ubnad_integration import start_ubnad_integration, stop_ubnad_integration, get_ubnad_stats
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'netshield-ai-secret-key-2024'
 socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
@@ -46,6 +49,7 @@ class AppState:
         self.simulation_type = None
         self.simulation_logs = []
         self.scan_running = False
+        self.ubnad_active = False  # UBNAD behavioral monitoring status
 
 state = AppState()
 
@@ -309,6 +313,9 @@ def monitor_loop():
             suspicious_count = sum(1 for ts in trust_scores.values() if ts['score'] < 70)
             high_risk_count = sum(1 for ts in trust_scores.values() if ts['score'] < 30)
 
+            # Get UBNAD behavioral stats
+            ubnad_stats = get_ubnad_stats()
+
             metrics = {
                 'active_processes': len(processes),
                 'suspicious_connections': suspicious_count,
@@ -316,6 +323,11 @@ def monitor_loop():
                 'threats_resolved': state.resolved_count,
                 'total_connections': len(connections),
                 'events_per_sec': random.randint(80, 200),
+                'ubnad_active': state.ubnad_active,
+                'behavioral_profiles': ubnad_stats.get('profiles_tracked', 0),
+                'intent_samples': ubnad_stats.get('intent_samples', 0),
+                'avg_intent': round(ubnad_stats.get('avg_intent', 0), 2),
+                'current_idle_time': round(ubnad_stats.get('current_idle_time', 0), 1)
             }
 
             # Top trust scores (sorted)
@@ -533,6 +545,10 @@ def simulator():
 @app.route('/scanner')
 def scanner_page():
     return render_template('scanner.html')
+
+@app.route('/behavioral')
+def behavioral_page():
+    return render_template('behavioral.html')
 
 @app.route('/reports')
 def reports():
@@ -830,6 +846,73 @@ def api_scanner_validate_config():
         return jsonify({'valid': False, 'errors': errors}), 400
     else:
         return jsonify({'valid': True, 'message': 'Configuration is valid'})
+
+
+# ─── UBNAD Behavioral Analysis API ──────────────────────────────────────────
+
+@app.route('/api/ubnad/status')
+def api_ubnad_status():
+    """Return UBNAD behavioral analysis status and statistics."""
+    stats = get_ubnad_stats()
+    stats['integrated'] = True
+    return jsonify(stats)
+
+@app.route('/api/ubnad/start', methods=['POST'])
+def api_ubnad_start():
+    """Start UBNAD behavioral analysis."""
+    try:
+        success = start_ubnad_integration(scanner_state)
+        if success:
+            state.ubnad_active = True
+            return jsonify({
+                'success': True, 
+                'message': 'UBNAD behavioral analysis started',
+                'features': [
+                    'Intent monitoring (user activity detection)',
+                    'Behavioral profiling',
+                    'Suspicion scoring',
+                    'Idle time analysis'
+                ]
+            })
+        else:
+            return jsonify({
+                'error': 'Failed to start UBNAD - components may not be available'
+            }), 500
+    except Exception as e:
+        return jsonify({'error': f'UBNAD start error: {str(e)}'}), 500
+
+@app.route('/api/ubnad/stop', methods=['POST'])
+def api_ubnad_stop():
+    """Stop UBNAD behavioral analysis."""
+    try:
+        stop_ubnad_integration()
+        state.ubnad_active = False
+        return jsonify({'success': True, 'message': 'UBNAD behavioral analysis stopped'})
+    except Exception as e:
+        return jsonify({'error': f'UBNAD stop error: {str(e)}'}), 500
+
+@app.route('/api/ubnad/behavioral-profiles')
+def api_ubnad_profiles():
+    """Get behavioral profiles for all monitored processes."""
+    try:
+        from ubnad_integration import ubnad_integration
+        if ubnad_integration and ubnad_integration.running:
+            profiles = []
+            for process_name, profile in ubnad_integration.behavioral_profiles.items():
+                profiles.append({
+                    'process': process_name,
+                    'first_seen': datetime.datetime.fromtimestamp(profile['first_seen']).strftime('%H:%M:%S'),
+                    'connection_count': profile['connection_count'],
+                    'avg_intent': round(profile['avg_intent'], 2),
+                    'avg_suspicion': round(profile['avg_suspicion'], 1),
+                    'max_idle_time': round(profile['max_idle_time'], 1),
+                    'last_seen': datetime.datetime.fromtimestamp(profile.get('last_seen', profile['first_seen'])).strftime('%H:%M:%S')
+                })
+            return jsonify(sorted(profiles, key=lambda x: x['avg_suspicion'], reverse=True))
+        else:
+            return jsonify([])
+    except Exception as e:
+        return jsonify({'error': f'Error getting profiles: {str(e)}'}), 500
 
 
 # ─── Reports Data ────────────────────────────────────────────────────────────

@@ -10,3 +10,7 @@ jinja2==3.1.2
 python-multipart==0.0.6
 python-socketio==5.9.0
 eventlet==0.33.3
+
+# UBNAD Behavioral Analysis Dependencies
+pynput==1.7.6
+pandas==2.1.4

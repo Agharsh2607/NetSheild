@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block title %}Behavioral Analysis - NetShield AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">🧠 Behavioral Analysis</h2>
+                    <p class="text-muted mb-0">UBNAD Integration - Intent Monitoring & Suspicion Scoring</p>
+                </div>
+                <div>
+                    <button id="startUbnad" class="btn btn-success me-2">
+                        <i class="fas fa-play"></i> Start UBNAD
+                    </button>
+                    <button id="stopUbnad" class="btn btn-danger" disabled>
+                        <i class="fas fa-stop"></i> Stop UBNAD
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">UBNAD Status</h6>
+                            <h4 id="ubnadStatus">Stopped</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-brain fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Behavioral Profiles</h6>
+                            <h4 id="profileCount">0</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-chart fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Current Intent</h6>
+                            <h4 id="currentIntent">0.0</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-activity fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Idle Time</h6>
+                            <h4 id="idleTime">0s</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Behavioral Profiles -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Process Behavioral Profiles
+                    </h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshProfiles()">
+                        <i class="fas fa-refresh"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Process</th>
+                                    <th>Connections</th>
+                                    <th>Avg Intent</th>
+                                    <th>Suspicion Score</th>
+                                    <th>Max Idle Time</th>
+                                    <th>First Seen</th>
+                                    <th>Last Seen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profilesTable">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">
+                                        <i class="fas fa-info-circle me-2"></i>Start UBNAD to see behavioral profiles
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- UBNAD Information -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>About UBNAD
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>Unauthorized Background Network Activity Detector</h6>
+                    <p class="text-muted small">
+                        UBNAD provides advanced behavioral analysis by monitoring user intent and detecting suspicious network activity during idle periods.
+                    </p>
+                    
+                    <h6 class="mt-3">Key Features:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success me-2"></i>Intent monitoring (keyboard/mouse activity)</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Behavioral profiling per process</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Suspicion scoring algorithms</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Idle time correlation</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Silent application detection</li>
+                    </ul>
+
+                    <h6 class="mt-3">Suspicion Factors:</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-exclamation-triangle text-warning me-2"></i>Network activity during user idle time</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning me-2"></i>Silent applications making connections</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning me-2"></i>Abnormal traffic patterns</li>
+                        <li><i class="fas fa-exclamation-triangle text-warning me-2"></i>Unknown process behavior</li>
+                    </ul>
+
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>Tip:</strong> UBNAD works best when monitoring during normal computer usage. It learns your patterns and detects anomalies.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent UBNAD Alerts -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>Recent UBNAD Alerts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="ubnadAlerts">
+                        <p class="text-muted text-center">
+                            <i class="fas fa-info-circle me-2"></i>No UBNAD alerts yet
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let ubnadActive = false;
+
+// Start UBNAD
+document.getElementById('startUbnad').addEventListener('click', async () => {
+    try {
+        const response = await fetch('/api/ubnad/start', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            ubnadActive = true;
+            updateUbnadStatus();
+            showNotification('UBNAD behavioral analysis started', 'success');
+        } else {
+            showNotification(data.error || 'Failed to start UBNAD', 'error');
+        }
+    } catch (error) {
+        showNotification('Error starting UBNAD: ' + error.message, 'error');
+    }
+});
+
+// Stop UBNAD
+document.getElementById('stopUbnad').addEventListener('click', async () => {
+    try {
+        const response = await fetch('/api/ubnad/stop', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.success) {
+            ubnadActive = false;
+            updateUbnadStatus();
+            showNotification('UBNAD behavioral analysis stopped', 'info');
+        } else {
+            showNotification(data.error || 'Failed to stop UBNAD', 'error');
+        }
+    } catch (error) {
+        showNotification('Error stopping UBNAD: ' + error.message, 'error');
+    }
+});
+
+// Update UBNAD status
+function updateUbnadStatus() {
+    const statusEl = document.getElementById('ubnadStatus');
+    const startBtn = document.getElementById('startUbnad');
+    const stopBtn = document.getElementById('stopUbnad');
+    
+    if (ubnadActive) {
+        statusEl.textContent = 'Active';
+        statusEl.className = 'text-success';
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+    } else {
+        statusEl.textContent = 'Stopped';
+        statusEl.className = 'text-danger';
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    }
+}
+
+// Refresh behavioral profiles
+async function refreshProfiles() {
+    try {
+        const response = await fetch('/api/ubnad/behavioral-profiles');
+        const profiles = await response.json();
+        
+        const tbody = document.getElementById('profilesTable');
+        
+        if (profiles.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted">
+                        <i class="fas fa-info-circle me-2"></i>No behavioral profiles yet
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = profiles.map(profile => `
+            <tr>
+                <td>
+                    <strong>${profile.process}</strong>
+                </td>
+                <td>
+                    <span class="badge bg-primary">${profile.connection_count}</span>
+                </td>
+                <td>
+                    <span class="badge ${profile.avg_intent > 0.5 ? 'bg-success' : 'bg-warning'}">
+                        ${profile.avg_intent}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge ${getSuspicionBadgeClass(profile.avg_suspicion)}">
+                        ${profile.avg_suspicion}
+                    </span>
+                </td>
+                <td>${profile.max_idle_time}s</td>
+                <td>${profile.first_seen}</td>
+                <td>${profile.last_seen}</td>
+            </tr>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error refreshing profiles:', error);
+    }
+}
+
+// Get badge class for suspicion score
+function getSuspicionBadgeClass(score) {
+    if (score > 20) return 'bg-danger';
+    if (score > 10) return 'bg-warning';
+    if (score > 5) return 'bg-info';
+    return 'bg-success';
+}
+
+// Update metrics from WebSocket
+socket.on('metrics_update', (data) => {
+    if (data.ubnad_active !== undefined) {
+        ubnadActive = data.ubnad_active;
+        updateUbnadStatus();
+    }
+    
+    document.getElementById('profileCount').textContent = data.behavioral_profiles || 0;
+    document.getElementById('currentIntent').textContent = data.avg_intent || '0.0';
+    document.getElementById('idleTime').textContent = (data.current_idle_time || 0) + 's';
+});
+
+// Listen for UBNAD alerts
+socket.on('scanner_alert', (alert) => {
+    if (alert.behavioral_analysis) {
+        addUbnadAlert(alert);
+    }
+});
+
+// Add UBNAD alert to the alerts panel
+function addUbnadAlert(alert) {
+    const alertsContainer = document.getElementById('ubnadAlerts');
+    
+    const alertElement = document.createElement('div');
+    alertElement.className = `alert alert-${getSeverityClass(alert.severity)} alert-dismissible fade show`;
+    alertElement.innerHTML = `
+        <strong>${alert.process}</strong><br>
+        <small>${alert.dest_ip}:${alert.dest_port}</small><br>
+        <small>Score: ${alert.suspicion_score}, Intent: ${alert.intent_score}</small>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    alertsContainer.prepend(alertElement);
+    
+    // Keep only last 5 alerts
+    const alerts = alertsContainer.querySelectorAll('.alert');
+    if (alerts.length > 5) {
+        alerts[alerts.length - 1].remove();
+    }
+}
+
+// Get severity class for alerts
+function getSeverityClass(severity) {
+    switch (severity.toLowerCase()) {
+        case 'critical': return 'danger';
+        case 'high': return 'warning';
+        case 'med': return 'info';
+        default: return 'secondary';
+    }
+}
+
+// Show notification
+function showNotification(message, type) {
+    // You can implement a toast notification system here
+    console.log(`${type.toUpperCase()}: ${message}`);
+}
+
+// Auto-refresh profiles every 10 seconds when UBNAD is active
+setInterval(() => {
+    if (ubnadActive) {
+        refreshProfiles();
+    }
+}, 10000);
+
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+    // Check initial UBNAD status
+    fetch('/api/ubnad/status')
+        .then(response => response.json())
+        .then(data => {
+            ubnadActive = data.monitoring_active || false;
+            updateUbnadStatus();
+            if (ubnadActive) {
+                refreshProfiles();
+            }
+        })
+        .catch(error => console.error('Error checking UBNAD status:', error));
+});
+</script>
+{% endblock %}
