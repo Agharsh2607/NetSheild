@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+{% set active_page = "Network Scanner" %}
+{% block title %}NetShield AI | Deep Packet Inspector{% endblock %}
+
+{% block content %}
+<div class="flex-1 pt-20 pb-8 px-8 space-y-5">
+
+    <!-- Scanner Control Bar -->
+    <div class="glass-card rounded-2xl p-5 border border-outline-variant/10">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00F2FF]/20 to-[#7000FF]/20 flex items-center justify-center" id="scanner-icon-wrap">
+                        <span class="material-symbols-outlined text-3xl text-[#00F2FF]" style="font-variation-settings:'FILL' 1;" id="scanner-icon">radar</span>
+                    </div>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#555] border-2 border-background" id="status-dot"></span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black headline bg-gradient-to-r from-[#00F2FF] to-[#7000FF] bg-clip-text text-transparent">Deep Packet Inspector</h1>
+                    <p class="text-[11px] text-on-surface-variant mt-0.5" id="scanner-status-text">Engine idle — click Start to begin capture</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="startScanner()" id="btn-start" class="flex items-center gap-1.5 px-5 py-2.5 bg-[#00F2FF]/15 text-[#00F2FF] text-[11px] font-bold rounded-xl hover:bg-[#00F2FF]/25 transition-all border border-[#00F2FF]/20 hover:border-[#00F2FF]/40 hover:shadow-[0_0_20px_rgba(0,242,255,0.15)]">
+                    <span class="material-symbols-outlined text-sm">play_arrow</span>Start
+                </button>
+                <button onclick="pauseScanner()" id="btn-pause" class="flex items-center gap-1.5 px-5 py-2.5 bg-[#FF8E3C]/10 text-[#FF8E3C] text-[11px] font-bold rounded-xl hover:bg-[#FF8E3C]/20 transition-all border border-transparent hidden">
+                    <span class="material-symbols-outlined text-sm">pause</span>Pause
+                </button>
+                <button onclick="resumeScanner()" id="btn-resume" class="flex items-center gap-1.5 px-5 py-2.5 bg-[#4CAF50]/10 text-[#4CAF50] text-[11px] font-bold rounded-xl hover:bg-[#4CAF50]/20 transition-all border border-transparent hidden">
+                    <span class="material-symbols-outlined text-sm">play_arrow</span>Resume
+                </button>
+                <button onclick="stopScanner()" id="btn-stop" class="flex items-center gap-1.5 px-5 py-2.5 bg-[#ffb4ab]/10 text-[#ffb4ab] text-[11px] font-bold rounded-xl hover:bg-[#ffb4ab]/20 transition-all border border-transparent hidden">
+                    <span class="material-symbols-outlined text-sm">stop</span>Stop
+                </button>
+                <button onclick="resetScanner()" class="flex items-center gap-1.5 px-4 py-2.5 bg-surface-container-low text-on-surface-variant text-[11px] font-bold rounded-xl hover:bg-surface-container-high transition-all">
+                    <span class="material-symbols-outlined text-sm">refresh</span>Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Cards Row -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="scanner-stats">
+        <div class="glass-card rounded-2xl p-4 border border-outline-variant/10 hover:border-[#00F2FF]/20 transition-all group">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-8 h-8 bg-[#00F2FF]/10 rounded-lg flex items-center justify-center group-hover:bg-[#00F2FF]/20 transition-all">
+                    <span class="material-symbols-outlined text-[#00F2FF] text-sm" style="font-variation-settings:'FILL' 1;">lan</span>
+                </div>
+                <span class="text-[9px] text-on-surface-variant font-medium uppercase tracking-widest">Packets</span>
+            </div>
+            <p class="text-2xl font-black headline text-on-surface tabular-nums" id="stat-total-pkts">0</p>
+            <p class="text-[9px] text-on-surface-variant mt-0.5">Total captured</p>
+        </div>
+        <div class="glass-card rounded-2xl p-4 border border-outline-variant/10 hover:border-[#ffb4ab]/20 transition-all group">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-8 h-8 bg-[#ffb4ab]/10 rounded-lg flex items-center justify-center group-hover:bg-[#ffb4ab]/20 transition-all">
+                    <span class="material-symbols-outlined text-[#ffb4ab] text-sm" style="font-variation-settings:'FILL' 1;">gpp_bad</span>
+                </div>
+                <span class="text-[9px] text-on-surface-variant font-medium uppercase tracking-widest">Suspicious</span>
+            </div>
+            <p class="text-2xl font-black headline text-on-surface tabular-nums" id="stat-suspicious-pkts">0</p>
+            <p class="text-[9px] text-[#ffb4ab] mt-0.5">Flagged packets</p>
+        </div>
+        <div class="glass-card rounded-2xl p-4 border border-outline-variant/10 hover:border-[#7000FF]/20 transition-all group">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-8 h-8 bg-[#7000FF]/10 rounded-lg flex items-center justify-center group-hover:bg-[#7000FF]/20 transition-all">
+                    <span class="material-symbols-outlined text-[#7000FF] text-sm" style="font-variation-settings:'FILL' 1;">speed</span>
+                </div>
+                <span class="text-[9px] text-on-surface-variant font-medium uppercase tracking-widest">Rate</span>
+            </div>
+            <p class="text-2xl font-black headline text-on-surface tabular-nums" id="stat-pps">0<span class="text-xs font-medium text-on-surface-variant ml-1">pkt/s</span></p>
+            <p class="text-[9px] text-on-surface-variant mt-0.5">Current throughput</p>
+        </div>
+        <div class="glass-card rounded-2xl p-4 border border-outline-variant/10 hover:border-[#4CAF50]/20 transition-all group">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-8 h-8 bg-[#4CAF50]/10 rounded-lg flex items-center justify-center group-hover:bg-[#4CAF50]/20 transition-all">
+                    <span class="material-symbols-outlined text-[#4CAF50] text-sm" style="font-variation-settings:'FILL' 1;">timer</span>
+                </div>
+                <span class="text-[9px] text-on-surface-variant font-medium uppercase tracking-widest">Uptime</span>
+            </div>
+            <p class="text-2xl font-black headline text-on-surface tabular-nums" id="stat-uptime">00:00</p>
+            <p class="text-[9px] text-on-surface-variant mt-0.5">Scan duration</p>
+        </div>
+    </div>
+
+    <!-- Main Grid: PPS Chart + Top Destinations + Top Processes -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Packets Per Second Chart -->
+        <div class="lg:col-span-2 glass-card rounded-2xl p-6 border border-outline-variant/10 min-h-[280px]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-sm font-bold text-on-surface">Packet Capture Rate</h2>
+                    <p class="text-[10px] text-on-surface-variant mt-0.5">Real-time packets per second</p>
+                </div>
+                <div class="flex gap-4 text-[10px]">
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#00F2FF]"></span>Throughput</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#ffb4ab]"></span>Alerts</span>
+                </div>
+            </div>
+            <div class="relative h-52">
+                <svg id="pps-chart" class="w-full h-full" viewBox="0 0 800 200" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="grad-pps" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#00F2FF" stop-opacity="0.25"/>
+                            <stop offset="100%" stop-color="#00F2FF" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <line x1="0" y1="50" x2="800" y2="50" stroke="#32353C" stroke-width="0.5"/>
+                    <line x1="0" y1="100" x2="800" y2="100" stroke="#32353C" stroke-width="0.5"/>
+                    <line x1="0" y1="150" x2="800" y2="150" stroke="#32353C" stroke-width="0.5"/>
+                    <path id="area-pps" fill="url(#grad-pps)" d="M0,200 L800,200"/>
+                    <path id="line-pps" fill="none" stroke="#00F2FF" stroke-width="2" d=""/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Top Destinations -->
+        <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+            <h2 class="text-sm font-bold text-on-surface mb-1">Top Destinations</h2>
+            <p class="text-[10px] text-on-surface-variant mb-4">Most contacted IPs</p>
+            <div class="space-y-2.5" id="top-destinations">
+                <div class="text-center text-[11px] text-on-surface-variant py-8">No data yet</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suspicious Alerts + Live Packet Feed -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Live Packet Feed -->
+        <div class="lg:col-span-2 glass-card rounded-2xl p-6 border border-outline-variant/10">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-sm font-bold text-on-surface">Live Packet Feed</h2>
+                    <p class="text-[10px] text-on-surface-variant mt-0.5" id="pkt-feed-count">Waiting for packets...</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-1.5 text-[10px] text-on-surface-variant cursor-pointer">
+                        <input type="checkbox" id="auto-scroll" checked class="rounded border-outline-variant/30 bg-surface-container-low text-[#00F2FF] focus:ring-[#00F2FF]/30 w-3 h-3">
+                        Auto-scroll
+                    </label>
+                    <select id="protocol-filter" class="bg-surface-container-low border-none rounded-lg px-3 py-1.5 text-[10px] text-on-surface focus:ring-1 ring-[#00F2FF]/30">
+                        <option value="all">All Protocols</option>
+                        <option value="TCP">TCP Only</option>
+                        <option value="UDP">UDP Only</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-[10px]">
+                    <thead><tr class="border-b border-outline-variant/20 text-on-surface-variant">
+                        <th class="text-left py-2 px-1.5 font-medium w-16">Time</th>
+                        <th class="text-left py-2 px-1.5 font-medium">Process</th>
+                        <th class="text-left py-2 px-1.5 font-medium">Source</th>
+                        <th class="text-left py-2 px-1.5 font-medium">Destination</th>
+                        <th class="text-left py-2 px-1.5 font-medium w-12">Proto</th>
+                        <th class="text-left py-2 px-1.5 font-medium w-14">Size</th>
+                        <th class="text-left py-2 px-1.5 font-medium w-14">Action</th>
+                    </tr></thead>
+                    <tbody id="packet-feed">
+                        <tr><td colspan="7" class="py-8 text-center text-on-surface-variant text-[11px]">
+                            <span class="material-symbols-outlined text-3xl text-on-surface-variant/20 block mb-2">wifi_tethering</span>
+                            Start the scanner to see live packets
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Suspicious Alerts -->
+        <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-sm font-bold text-on-surface">DPI Alerts</h2>
+                <span class="text-[10px] text-on-surface-variant" id="alert-count">0 alerts</span>
+            </div>
+            <div class="space-y-2.5 max-h-[400px] overflow-y-auto pr-1" id="scanner-alerts">
+                <div class="text-center text-[11px] text-on-surface-variant py-8">
+                    <span class="material-symbols-outlined text-3xl text-on-surface-variant/20 block mb-2">verified_user</span>
+                    No suspicious packets detected
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Processes Bar -->
+    <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+        <h2 class="text-sm font-bold text-on-surface mb-1">Process Packet Distribution</h2>
+        <p class="text-[10px] text-on-surface-variant mb-4">Packets captured per process</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3" id="process-bars">
+            <div class="text-center text-[11px] text-on-surface-variant py-4 col-span-full">No data yet</div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ─── State ─────────────────────────────────────────────────────────
+let scannerRunning = false;
+let scannerPaused = false;
+const ppsData = [];
+const MAX_PPS = 120;
+const packetBuffer = [];
+const MAX_FEED = 80;
+let totalSuspicious = 0;
+
+// ─── Scanner Controls ──────────────────────────────────────────────
+
+async function scannerAction(action) {
+    try {
+        const res = await fetch(`/api/scanner/${action}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (data.success) showToast(data.message, 'success');
+        else showToast(data.error || 'Failed', 'error');
+    } catch(e) { showToast('Network error', 'error'); }
+}
+
+function startScanner() { scannerAction('start'); }
+function stopScanner() { scannerAction('stop'); }
+function pauseScanner() { scannerAction('pause'); }
+function resumeScanner() { scannerAction('resume'); }
+function resetScanner() {
+    scannerAction('reset');
+    ppsData.length = 0;
+    packetBuffer.length = 0;
+    totalSuspicious = 0;
+    renderPPSChart();
+    document.getElementById('packet-feed').innerHTML = `<tr><td colspan="7" class="py-8 text-center text-on-surface-variant text-[11px]">
+        <span class="material-symbols-outlined text-3xl text-on-surface-variant/20 block mb-2">wifi_tethering</span>
+        Start the scanner to see live packets
+    </td></tr>`;
+    document.getElementById('scanner-alerts').innerHTML = `<div class="text-center text-[11px] text-on-surface-variant py-8">
+        <span class="material-symbols-outlined text-3xl text-on-surface-variant/20 block mb-2">verified_user</span>
+        No suspicious packets detected
+    </div>`;
+}
+
+// ─── UI State Sync ─────────────────────────────────────────────────
+
+function updateControlState(running, paused) {
+    scannerRunning = running;
+    scannerPaused = paused;
+    const dot = document.getElementById('status-dot');
+    const wrap = document.getElementById('scanner-icon-wrap');
+    const statusText = document.getElementById('scanner-status-text');
+    const btnStart = document.getElementById('btn-start');
+    const btnPause = document.getElementById('btn-pause');
+    const btnResume = document.getElementById('btn-resume');
+    const btnStop = document.getElementById('btn-stop');
+
+    if (running && !paused) {
+        dot.className = 'absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#4CAF50] border-2 border-background animate-pulse';
+        wrap.className = 'w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00F2FF]/20 to-[#7000FF]/20 flex items-center justify-center animate-pulse';
+        statusText.textContent = 'Engine active — capturing packets in real-time';
+        btnStart.classList.add('hidden');
+        btnPause.classList.remove('hidden');
+        btnResume.classList.add('hidden');
+        btnStop.classList.remove('hidden');
+    } else if (running && paused) {
+        dot.className = 'absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#FF8E3C] border-2 border-background';
+        wrap.className = 'w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF8E3C]/20 to-[#7000FF]/20 flex items-center justify-center';
+        statusText.textContent = 'Engine paused — packets are being skipped';
+        btnStart.classList.add('hidden');
+        btnPause.classList.add('hidden');
+        btnResume.classList.remove('hidden');
+        btnStop.classList.remove('hidden');
+    } else {
+        dot.className = 'absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#555] border-2 border-background';
+        wrap.className = 'w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00F2FF]/20 to-[#7000FF]/20 flex items-center justify-center';
+        statusText.textContent = 'Engine idle — click Start to begin capture';
+        btnStart.classList.remove('hidden');
+        btnPause.classList.add('hidden');
+        btnResume.classList.add('hidden');
+        btnStop.classList.add('hidden');
+    }
+}
+
+// ─── WebSocket Listeners ───────────────────────────────────────────
+
+socket.on('scanner_status', (d) => {
+    updateControlState(d.running, d.paused || false);
+    if (d.message) showToast(d.message, 'success');
+});
+
+socket.on('scanner_error', (d) => {
+    showToast(d.message, 'error');
+    updateControlState(false, false);
+});
+
+socket.on('scanner_rate', (d) => {
+    ppsData.push(d.packets_per_sec);
+    if (ppsData.length > MAX_PPS) ppsData.shift();
+    renderPPSChart();
+
+    document.getElementById('stat-total-pkts').textContent = d.total_packets.toLocaleString();
+    document.getElementById('stat-suspicious-pkts').textContent = d.suspicious.toLocaleString();
+    document.getElementById('stat-pps').innerHTML = `${d.packets_per_sec}<span class="text-xs font-medium text-on-surface-variant ml-1">pkt/s</span>`;
+});
+
+socket.on('scanner_alert', (alert) => {
+    totalSuspicious++;
+    document.getElementById('alert-count').textContent = `${totalSuspicious} alerts`;
+
+    const container = document.getElementById('scanner-alerts');
+    const placeholder = container.querySelector('.text-center');
+    if (placeholder) container.innerHTML = '';
+
+    const sevColors = { Critical: '#ffb4ab', High: '#FF8E3C', Med: '#FFCC02', Low: '#4CAF50', Info: '#adc6ff' };
+    const color = sevColors[alert.severity] || '#adc6ff';
+
+    const html = `<div class="p-3 bg-surface-container-low/40 rounded-xl border-l-2 hover:bg-surface-container-low/60 transition-all" style="border-color:${color}">
+        <div class="flex items-center justify-between mb-1">
+            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style="background:${color}15;color:${color}">${alert.severity}</span>
+            <span class="text-[9px] text-on-surface-variant font-mono">${alert.timestamp}</span>
+        </div>
+        <p class="text-[11px] font-medium text-on-surface">${alert.process} → ${alert.dest_ip}:${alert.dest_port}</p>
+        <p class="text-[10px] text-on-surface-variant mt-0.5">${alert.reasons[0] || 'Anomaly detected'}</p>
+        <div class="flex gap-2 mt-2">
+            <button onclick="blockScannerIP('${alert.dest_ip}')" class="text-[9px] text-[#ffb4ab] hover:underline">Block IP</button>
+            <button onclick="whitelistProcess('${alert.process}')" class="text-[9px] text-[#4CAF50] hover:underline">Whitelist</button>
+        </div>
+    </div>`;
+    container.insertAdjacentHTML('afterbegin', html);
+    while (container.children.length > 30) container.removeChild(container.lastChild);
+});
+
+// ─── PPS Chart Rendering ───────────────────────────────────────────
+
+function renderPPSChart() {
+    const w = 800, h = 200;
+    const len = ppsData.length;
+    if (len < 2) return;
+    const maxVal = Math.max(5, ...ppsData);
+
+    function buildPath(arr) {
+        return arr.map((v, i) => {
+            const x = (i / (len - 1)) * w;
+            const y = h - (v / maxVal) * (h - 20);
+            return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+        }).join(' ');
+    }
+    function buildArea(arr) {
+        return `${buildPath(arr)} L${w},${h} L0,${h} Z`;
+    }
+
+    document.getElementById('line-pps').setAttribute('d', buildPath(ppsData));
+    document.getElementById('area-pps').setAttribute('d', buildArea(ppsData));
+}
+
+// ─── Polling for Stats & Packets ───────────────────────────────────
+
+async function pollStats() {
+    try {
+        const res = await fetch('/api/scanner/status');
+        const stats = await res.json();
+        updateControlState(stats.running, stats.paused);
+        document.getElementById('stat-total-pkts').textContent = stats.total_packets.toLocaleString();
+        document.getElementById('stat-suspicious-pkts').textContent = stats.suspicious_packets.toLocaleString();
+
+        if (stats.uptime_seconds > 0) {
+            const m = Math.floor(stats.uptime_seconds / 60);
+            const s = stats.uptime_seconds % 60;
+            document.getElementById('stat-uptime').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        // Top destinations
+        renderTopDestinations(stats.top_destinations || []);
+        // Top processes
+        renderProcessBars(stats.top_processes || []);
+    } catch(e) {}
+}
+
+async function pollPackets() {
+    if (!scannerRunning) return;
+    try {
+        const res = await fetch('/api/scanner/packets?limit=40');
+        const packets = await res.json();
+        renderPacketFeed(packets);
+    } catch(e) {}
+}
+
+function renderPacketFeed(packets) {
+    const filter = document.getElementById('protocol-filter').value;
+    const filtered = filter === 'all' ? packets : packets.filter(p => p.protocol === filter);
+    const tbody = document.getElementById('packet-feed');
+
+    if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-on-surface-variant text-[11px]">
+            <span class="material-symbols-outlined text-3xl text-on-surface-variant/20 block mb-2">wifi_tethering</span>
+            ${scannerRunning ? 'Capturing... waiting for matching packets' : 'Start the scanner to see live packets'}
+        </td></tr>`;
+        return;
+    }
+
+    document.getElementById('pkt-feed-count').textContent = `Showing ${filtered.length} of ${packets.length} recent packets`;
+
+    tbody.innerHTML = filtered.slice(-30).reverse().map(p => {
+        const isSus = p.process && p.process !== 'Unknown' && !['chrome.exe', 'msedge.exe', 'svchost.exe', 'firefox.exe', 'code.exe', 'slack.exe', 'node.exe'].includes(p.process);
+        const rowClass = isSus ? 'bg-[#ffb4ab]/5' : '';
+        return `<tr class="border-b border-outline-variant/5 hover:bg-[#32353C]/20 transition-colors ${rowClass}">
+            <td class="py-1.5 px-1.5 font-mono text-on-surface-variant">${p.timestamp}</td>
+            <td class="py-1.5 px-1.5 font-medium text-on-surface">${p.process || 'Unknown'}</td>
+            <td class="py-1.5 px-1.5 font-mono text-[#adc6ff]">${p.src_ip}:${p.src_port}</td>
+            <td class="py-1.5 px-1.5 font-mono text-[#adc6ff]">${p.dest_ip}:${p.dest_port}</td>
+            <td class="py-1.5 px-1.5"><span class="px-1.5 py-0.5 ${p.protocol==='TCP' ? 'bg-[#00F2FF]/10 text-[#00F2FF]' : 'bg-[#7000FF]/10 text-[#d1bcff]'} rounded text-[9px] font-bold">${p.protocol}</span></td>
+            <td class="py-1.5 px-1.5 text-on-surface-variant">${p.size}B</td>
+            <td class="py-1.5 px-1.5"><button onclick="blockScannerIP('${p.dest_ip}')" class="text-[9px] text-[#ffb4ab] hover:underline">Block</button></td>
+        </tr>`;
+    }).join('');
+
+    if (document.getElementById('auto-scroll').checked) {
+        tbody.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+}
+
+function renderTopDestinations(destinations) {
+    const el = document.getElementById('top-destinations');
+    if (!destinations.length) {
+        el.innerHTML = '<div class="text-center text-[11px] text-on-surface-variant py-8">No data yet</div>';
+        return;
+    }
+    const maxCount = destinations[0]?.count || 1;
+    el.innerHTML = destinations.slice(0, 8).map(d => {
+        const pct = Math.round((d.count / maxCount) * 100);
+        const isBad = ['45.12.8.21','185.220.101.1','91.215.85.10','5.188.86.114','103.224.182.250'].includes(d.ip);
+        const barColor = isBad ? '#ffb4ab' : '#00F2FF';
+        return `<div class="flex items-center gap-3 group">
+            <div class="flex-1 min-w-0">
+                <p class="text-[11px] font-mono ${isBad ? 'text-[#ffb4ab] font-bold' : 'text-on-surface'} truncate">${d.ip}${isBad ? ' ⚠' : ''}</p>
+                <div class="w-full h-1 bg-surface-container-highest rounded-full mt-1 overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500" style="width:${pct}%;background:${barColor}"></div>
+                </div>
+            </div>
+            <span class="text-[10px] font-bold text-on-surface-variant tabular-nums">${d.count}</span>
+            <button onclick="blockScannerIP('${d.ip}')" class="text-[9px] text-[#ffb4ab] opacity-0 group-hover:opacity-100 transition-opacity hover:underline">Block</button>
+        </div>`;
+    }).join('');
+}
+
+function renderProcessBars(processes) {
+    const el = document.getElementById('process-bars');
+    if (!processes.length) {
+        el.innerHTML = '<div class="text-center text-[11px] text-on-surface-variant py-4 col-span-full">No data yet</div>';
+        return;
+    }
+    const maxCount = processes[0]?.count || 1;
+    const colors = ['#00F2FF', '#7000FF', '#FF8E3C', '#4CAF50', '#ffb4ab', '#adc6ff', '#d1bcff', '#FFCC02', '#74F5FF', '#e1fdff'];
+    el.innerHTML = processes.slice(0, 10).map((p, i) => {
+        const pct = Math.round((p.count / maxCount) * 100);
+        const color = colors[i % colors.length];
+        return `<div class="glass-card rounded-xl p-3 border border-outline-variant/5">
+            <div class="flex items-center justify-between mb-1.5">
+                <span class="text-[10px] font-bold text-on-surface truncate">${p.process}</span>
+                <span class="text-[9px] font-bold tabular-nums" style="color:${color}">${p.count}</span>
+            </div>
+            <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500" style="width:${pct}%;background:${color}"></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ─── Quick Actions ─────────────────────────────────────────────────
+
+async function blockScannerIP(ip) {
+    if (!confirm(`Block IP ${ip} from scanner?`)) return;
+    try {
+        await fetch('/api/scanner/block', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ip})
+        });
+        showToast(`IP ${ip} blocked in scanner`, 'success');
+    } catch(e) { showToast('Failed to block', 'error'); }
+}
+
+async function whitelistProcess(proc) {
+    try {
+        await fetch('/api/scanner/whitelist', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({process: proc})
+        });
+        showToast(`${proc} whitelisted`, 'success');
+    } catch(e) { showToast('Failed to whitelist', 'error'); }
+}
+
+// ─── Init ──────────────────────────────────────────────────────────
+
+pollStats();
+setInterval(pollStats, 3000);
+setInterval(pollPackets, 2000);
+</script>
+{% endblock %}

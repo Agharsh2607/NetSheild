@@ -1,0 +1,10 @@
+flask
+flask-socketio
+psutil
+scapy
+fastapi
+uvicorn
+websockets
+jinja2
+python-multipart
+python-socketio

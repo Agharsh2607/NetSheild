@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% set active_page = "Dashboard" %}
+{% block title %}NetShield AI | Live Dashboard{% endblock %}
+
+{% block content %}
+<div class="flex-1 pt-20 pb-8 px-8 space-y-6">
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="stat-cards">
+        <div class="glass-card rounded-2xl p-5 border border-outline-variant/10 hover:border-[#00F2FF]/30 transition-all">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-[#00F2FF]/10 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-[#00F2FF]" style="font-variation-settings:'FILL' 1;">hub</span></div>
+                <span class="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">Active Processes</span>
+            </div>
+            <p class="text-3xl font-black headline text-on-surface" id="stat-processes">--</p>
+            <p class="text-[10px] text-primary-container mt-1 font-medium">Monitored in real-time</p>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-outline-variant/10 hover:border-[#FF8E3C]/30 transition-all">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-[#FF8E3C]/10 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-[#FF8E3C]" style="font-variation-settings:'FILL' 1;">warning</span></div>
+                <span class="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">Suspicious</span>
+            </div>
+            <p class="text-3xl font-black headline text-on-surface" id="stat-suspicious">--</p>
+            <p class="text-[10px] text-[#FF8E3C] mt-1 font-medium">Trust score &lt; 70</p>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-outline-variant/10 hover:border-[#ffb4ab]/30 transition-all">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-[#ffb4ab]/10 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-[#ffb4ab]" style="font-variation-settings:'FILL' 1;">gpp_bad</span></div>
+                <span class="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">High Risk</span>
+            </div>
+            <p class="text-3xl font-black headline text-on-surface" id="stat-highrisk">--</p>
+            <p class="text-[10px] text-[#ffb4ab] mt-1 font-medium">Requires immediate action</p>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-outline-variant/10 hover:border-[#4CAF50]/30 transition-all">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-[#4CAF50]/10 rounded-xl flex items-center justify-center"><span class="material-symbols-outlined text-[#4CAF50]" style="font-variation-settings:'FILL' 1;">verified_user</span></div>
+                <span class="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">Resolved</span>
+            </div>
+            <p class="text-3xl font-black headline text-on-surface" id="stat-resolved">0</p>
+            <p class="text-[10px] text-[#4CAF50] mt-1 font-medium">Threats mitigated</p>
+        </div>
+    </div>
+
+    <!-- Main Grid: Chart + Trust Scores -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Network Activity Chart -->
+        <div class="lg:col-span-2 glass-card rounded-2xl p-6 border border-outline-variant/10 min-h-[360px]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-sm font-bold text-on-surface">Network Activity</h2>
+                    <p class="text-[10px] text-on-surface-variant mt-0.5">Real-time connections over time</p>
+                </div>
+                <div class="flex gap-4 text-[10px]">
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#00F2FF]"></span>Inbound</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[#7000FF]"></span>Outbound</span>
+                </div>
+            </div>
+            <div class="relative h-72">
+                <svg id="activity-chart" class="w-full h-full" viewBox="0 0 800 280" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="grad-in" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#00F2FF" stop-opacity="0.3"/><stop offset="100%" stop-color="#00F2FF" stop-opacity="0"/></linearGradient>
+                        <linearGradient id="grad-out" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#7000FF" stop-opacity="0.3"/><stop offset="100%" stop-color="#7000FF" stop-opacity="0"/></linearGradient>
+                    </defs>
+                    <!-- Grid lines -->
+                    <line x1="0" y1="56" x2="800" y2="56" stroke="#32353C" stroke-width="0.5"/>
+                    <line x1="0" y1="112" x2="800" y2="112" stroke="#32353C" stroke-width="0.5"/>
+                    <line x1="0" y1="168" x2="800" y2="168" stroke="#32353C" stroke-width="0.5"/>
+                    <line x1="0" y1="224" x2="800" y2="224" stroke="#32353C" stroke-width="0.5"/>
+                    <path id="area-inbound" fill="url(#grad-in)" d="M0,280 L800,280"/>
+                    <path id="line-inbound" fill="none" stroke="#00F2FF" stroke-width="2" d=""/>
+                    <path id="area-outbound" fill="url(#grad-out)" d="M0,280 L800,280"/>
+                    <path id="line-outbound" fill="none" stroke="#7000FF" stroke-width="2" d=""/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Trust Score Panel -->
+        <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-sm font-bold text-on-surface">Trust Scores</h2>
+                <span class="text-[10px] text-on-surface-variant">Lowest first</span>
+            </div>
+            <div class="space-y-3" id="trust-panel">
+                <div class="text-center text-xs text-on-surface-variant py-8">Scanning...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connections Table + Threat Feed -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Connection Registry -->
+        <div class="lg:col-span-2 glass-card rounded-2xl p-6 border border-outline-variant/10">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-sm font-bold text-on-surface">Connection Registry</h2>
+                    <p class="text-[10px] text-on-surface-variant mt-0.5" id="conn-count">Loading connections...</p>
+                </div>
+                <button onclick="executeScan()" class="flex items-center gap-1.5 px-4 py-2 bg-[#00F2FF]/10 text-[#00F2FF] text-[10px] font-bold rounded-lg hover:bg-[#00F2FF]/20 transition-all">
+                    <span class="material-symbols-outlined text-sm">radar</span>Full Scan
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-[11px]">
+                    <thead><tr class="border-b border-outline-variant/20 text-on-surface-variant">
+                        <th class="text-left py-3 px-2 font-medium">Process</th>
+                        <th class="text-left py-3 px-2 font-medium">PID</th>
+                        <th class="text-left py-3 px-2 font-medium">Destination</th>
+                        <th class="text-left py-3 px-2 font-medium">Port</th>
+                        <th class="text-left py-3 px-2 font-medium">Protocol</th>
+                        <th class="text-left py-3 px-2 font-medium">Status</th>
+                        <th class="text-left py-3 px-2 font-medium">Action</th>
+                    </tr></thead>
+                    <tbody id="conn-table">
+                        <tr><td colspan="7" class="py-8 text-center text-on-surface-variant">Scanning network...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Threat Feed -->
+        <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-sm font-bold text-on-surface">Threat Feed</h2>
+                <a href="/alerts" class="text-[10px] text-primary-container hover:underline">View all →</a>
+            </div>
+            <div class="space-y-3" id="threat-feed">
+                <div class="text-center text-xs text-on-surface-variant py-8">No threats detected</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const chartData = { inbound: [], outbound: [] };
+const MAX_POINTS = 60;
+
+// Metrics update
+socket.on('metrics_update', (d) => {
+    document.getElementById('stat-processes').textContent = d.active_processes;
+    document.getElementById('stat-suspicious').textContent = d.suspicious_connections;
+    document.getElementById('stat-highrisk').textContent = d.high_risk_alerts;
+    document.getElementById('stat-resolved').textContent = d.threats_resolved;
+});
+
+// Traffic chart
+socket.on('traffic_update', (d) => {
+    chartData.inbound.push(d.inbound);
+    chartData.outbound.push(d.outbound);
+    if (chartData.inbound.length > MAX_POINTS) {
+        chartData.inbound.shift();
+        chartData.outbound.shift();
+    }
+    renderChart();
+});
+
+// Initial traffic history
+socket.on('traffic_history', (data) => {
+    chartData.inbound = data.map(d => d.inbound);
+    chartData.outbound = data.map(d => d.outbound);
+    renderChart();
+});
+
+function renderChart() {
+    const w = 800, h = 280;
+    const maxVal = Math.max(20, ...chartData.inbound, ...chartData.outbound);
+    const len = chartData.inbound.length;
+    if (len < 2) return;
+
+    function buildPath(arr) {
+        return arr.map((v, i) => {
+            const x = (i / (len - 1)) * w;
+            const y = h - (v / maxVal) * (h - 20);
+            return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+        }).join(' ');
+    }
+    function buildArea(arr) {
+        const line = buildPath(arr);
+        return `${line} L${w},${h} L0,${h} Z`;
+    }
+
+    document.getElementById('line-inbound').setAttribute('d', buildPath(chartData.inbound));
+    document.getElementById('area-inbound').setAttribute('d', buildArea(chartData.inbound));
+    document.getElementById('line-outbound').setAttribute('d', buildPath(chartData.outbound));
+    document.getElementById('area-outbound').setAttribute('d', buildArea(chartData.outbound));
+}
+
+// Connection table
+socket.on('connections_update', (data) => {
+    document.getElementById('conn-count').textContent = `${data.total} active connections`;
+    const tbody = document.getElementById('conn-table');
+    if (!data.connections.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-on-surface-variant">No connections</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.connections.slice(0, 20).map(c => {
+        const statusColor = c.status === 'ESTABLISHED' ? 'text-[#4CAF50]' : 'text-[#FF8E3C]';
+        return `<tr class="border-b border-outline-variant/5 hover:bg-[#32353C]/20 transition-colors">
+            <td class="py-2.5 px-2 font-medium text-on-surface">${c.process}</td>
+            <td class="py-2.5 px-2 text-on-surface-variant">${c.pid}</td>
+            <td class="py-2.5 px-2 font-mono text-[#adc6ff]">${c.remote_ip}</td>
+            <td class="py-2.5 px-2">${c.remote_port}</td>
+            <td class="py-2.5 px-2"><span class="px-2 py-0.5 bg-[#00F2FF]/10 text-[#00F2FF] rounded text-[9px] font-bold">${c.protocol}</span></td>
+            <td class="py-2.5 px-2 ${statusColor} font-medium">${c.status}</td>
+            <td class="py-2.5 px-2"><button onclick="blockIP('${c.remote_ip}')" class="text-[10px] text-[#ffb4ab] hover:underline">Block</button></td>
+        </tr>`;
+    }).join('');
+});
+
+// Trust scores panel
+socket.on('trust_scores', (scores) => {
+    const panel = document.getElementById('trust-panel');
+    if (!scores.length) {
+        panel.innerHTML = '<div class="text-center text-xs text-on-surface-variant py-4">All processes trusted</div>';
+        return;
+    }
+    panel.innerHTML = scores.map(ts => {
+        const barColor = ts.score >= 70 ? '#00F2FF' : ts.score >= 40 ? '#FF8E3C' : '#ffb4ab';
+        return `<div class="flex items-center gap-3 p-3 bg-surface-container-low/40 rounded-xl hover:bg-surface-container-low/60 transition-all">
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-on-surface truncate">${ts.process}</p>
+                <p class="text-[9px] text-on-surface-variant">PID: ${ts.pid}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-24 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500" style="width:${ts.score}%;background:${barColor}"></div>
+                </div>
+                <span class="text-xs font-bold" style="color:${barColor}">${ts.score}</span>
+            </div>
+        </div>`;
+    }).join('');
+});
+
+// Threat feed (live alerts)
+socket.on('new_alert', (alert) => {
+    const feed = document.getElementById('threat-feed');
+    const noThreats = feed.querySelector('.text-center');
+    if (noThreats) feed.innerHTML = '';
+
+    const sevColors = { Critical: '#ffb4ab', High: '#FF8E3C', Med: '#FFCC02', Low: '#4CAF50' };
+    const color = sevColors[alert.severity] || '#4CAF50';
+    const html = `<div class="p-3 bg-surface-container-low/40 rounded-xl border-l-2 hover:bg-surface-container-low/60 transition-all" style="border-color:${color}" id="alert-${alert.id}">
+        <div class="flex items-center justify-between mb-1">
+            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style="background:${color}15;color:${color}">${alert.severity}</span>
+            <span class="text-[9px] text-on-surface-variant">${alert.timestamp}</span>
+        </div>
+        <p class="text-[11px] font-medium text-on-surface">${alert.process}</p>
+        <p class="text-[10px] text-on-surface-variant mt-0.5">${alert.explanation}</p>
+    </div>`;
+    feed.insertAdjacentHTML('afterbegin', html);
+    // Keep max 10
+    while (feed.children.length > 10) feed.removeChild(feed.lastChild);
+});
+
+socket.on('recent_alerts', (alerts) => {
+    if (alerts.length === 0) return;
+    const feed = document.getElementById('threat-feed');
+    feed.innerHTML = '';
+    const sevColors = { Critical: '#ffb4ab', High: '#FF8E3C', Med: '#FFCC02', Low: '#4CAF50' };
+    alerts.slice(0, 8).forEach(alert => {
+        const color = sevColors[alert.severity] || '#4CAF50';
+        feed.innerHTML += `<div class="p-3 bg-surface-container-low/40 rounded-xl border-l-2 hover:bg-surface-container-low/60 transition-all" style="border-color:${color}">
+            <div class="flex items-center justify-between mb-1">
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style="background:${color}15;color:${color}">${alert.severity}</span>
+                <span class="text-[9px] text-on-surface-variant">${alert.timestamp}</span>
+            </div>
+            <p class="text-[11px] font-medium text-on-surface">${alert.process}</p>
+            <p class="text-[10px] text-on-surface-variant mt-0.5">${alert.explanation}</p>
+        </div>`;
+    });
+});
+</script>
+{% endblock %}

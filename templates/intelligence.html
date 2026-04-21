@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% set active_page = "Process Intelligence" %}
+{% block title %}NetShield AI | Process Intelligence{% endblock %}
+
+{% block content %}
+<div class="flex-1 pt-20 pb-8 px-8 flex gap-4 min-h-screen">
+    <!-- Process List (Left Panel) -->
+    <div class="w-80 flex-shrink-0 glass-card rounded-2xl p-4 border border-outline-variant/10 h-[calc(100vh-6rem)] overflow-y-auto sticky top-20">
+        <div class="mb-4">
+            <h2 class="text-sm font-bold text-on-surface mb-2">Process Inventory</h2>
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                <input id="proc-search" class="w-full bg-surface-container-low border-none rounded-lg pl-9 pr-3 py-2 text-[11px] focus:ring-1 ring-[#00F2FF]/30 text-on-surface placeholder-on-surface-variant/50" placeholder="Filter processes..." type="text"/>
+            </div>
+        </div>
+        <div class="space-y-2" id="process-list">
+            <div class="text-center text-[11px] text-on-surface-variant py-8">Scanning processes...</div>
+        </div>
+    </div>
+
+    <!-- Detail Panel (Right) -->
+    <div class="flex-1 space-y-4" id="detail-panel">
+        <div class="glass-card rounded-2xl p-8 border border-outline-variant/10 flex flex-col items-center justify-center min-h-[400px]">
+            <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-4">psychology</span>
+            <h2 class="text-lg font-bold text-on-surface-variant/50 headline">Select a Process</h2>
+            <p class="text-xs text-on-surface-variant/30 mt-1">Click any process to view deep behavioral analysis</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let processes = [];
+let selectedPid = null;
+
+async function loadProcesses() {
+    const res = await fetch('/api/processes');
+    processes = await res.json();
+    renderProcessList();
+}
+
+function renderProcessList(filter = '') {
+    const list = document.getElementById('process-list');
+    const filtered = filter ? processes.filter(p => p.name.toLowerCase().includes(filter.toLowerCase())) : processes;
+
+    if (!filtered.length) {
+        list.innerHTML = '<div class="text-center text-[11px] text-on-surface-variant py-4">No matches</div>';
+        return;
+    }
+
+    list.innerHTML = filtered.map(p => {
+        const scoreColor = p.trust_score >= 70 ? '#00F2FF' : p.trust_score >= 40 ? '#FF8E3C' : '#ffb4ab';
+        const isSelected = p.pid === selectedPid;
+        return `<button onclick="selectProcess(${p.pid})" class="w-full text-left p-3 rounded-xl transition-all ${isSelected ? 'bg-[#00F2FF]/10 border border-[#00F2FF]/30' : 'bg-surface-container-low/30 border border-transparent hover:bg-surface-container-low/60'}">
+            <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold text-on-surface truncate">${p.name}</span>
+                <span class="text-[10px] font-bold" style="color:${scoreColor}">${p.trust_score}</span>
+            </div>
+            <div class="flex items-center justify-between text-[9px] text-on-surface-variant">
+                <span>PID: ${p.pid}</span>
+                <span>${p.connection_count} conn</span>
+            </div>
+            <div class="w-full h-1 bg-surface-container-highest rounded-full mt-2 overflow-hidden">
+                <div class="h-full rounded-full" style="width:${p.trust_score}%;background:${scoreColor}"></div>
+            </div>
+        </button>`;
+    }).join('');
+}
+
+function selectProcess(pid) {
+    selectedPid = pid;
+    const proc = processes.find(p => p.pid === pid);
+    if (!proc) return;
+    renderProcessList(document.getElementById('proc-search').value);
+    renderDetail(proc);
+}
+
+function renderDetail(p) {
+    const panel = document.getElementById('detail-panel');
+    const scoreColor = p.trust_score >= 70 ? '#00F2FF' : p.trust_score >= 40 ? '#FF8E3C' : '#ffb4ab';
+    const circumference = 2 * Math.PI * 60;
+    const dashoffset = circumference - (p.trust_score / 100) * circumference;
+
+    const reasons = (p.reasons || []).map(r => `<div class="flex items-start gap-2 p-2 bg-surface-container-low/40 rounded-lg">
+        <span class="material-symbols-outlined text-xs text-[#FF8E3C] mt-0.5">warning</span>
+        <span class="text-[11px] text-on-surface-variant">${r}</span>
+    </div>`).join('') || '<div class="text-center text-[11px] text-on-surface-variant py-4">No anomalies detected</div>';
+
+    const conns = (p.connections || []).map(c => `<tr class="border-b border-outline-variant/5">
+        <td class="py-2 px-2 text-[11px] font-mono text-[#adc6ff]">${c.remote_ip}</td>
+        <td class="py-2 px-2 text-[11px]">${c.remote_port}</td>
+        <td class="py-2 px-2 text-[11px]">${c.protocol}</td>
+        <td class="py-2 px-2 text-[11px] ${c.status === 'ESTABLISHED' ? 'text-[#4CAF50]' : 'text-[#FF8E3C]'}">${c.status}</td>
+    </tr>`).join('') || '<tr><td colspan="4" class="py-4 text-center text-[11px] text-on-surface-variant">No active connections</td></tr>';
+
+    panel.innerHTML = `
+    <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+        <div class="flex items-start justify-between">
+            <div>
+                <h2 class="text-xl font-black headline text-on-surface">${p.name}</h2>
+                <p class="text-xs text-on-surface-variant mt-1">PID: ${p.pid} · ${p.exe}</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="terminateProcess(${p.pid})" class="px-4 py-2 bg-[#ffb4ab]/10 text-[#ffb4ab] text-[10px] font-bold rounded-lg hover:bg-[#ffb4ab]/20 transition-all">Terminate</button>
+                <button onclick="markSafe(${p.pid})" class="px-4 py-2 bg-[#4CAF50]/10 text-[#4CAF50] text-[10px] font-bold rounded-lg hover:bg-[#4CAF50]/20 transition-all">Mark Safe</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Trust Score Gauge -->
+        <div class="glass-card rounded-2xl p-6 border border-outline-variant/10 flex flex-col items-center">
+            <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Trust Score</h3>
+            <div class="relative">
+                <svg class="w-36 h-36 -rotate-90" viewBox="0 0 140 140">
+                    <circle cx="70" cy="70" r="60" fill="none" stroke="#32353C" stroke-width="8"/>
+                    <circle cx="70" cy="70" r="60" fill="none" stroke="${scoreColor}" stroke-width="8" stroke-linecap="round"
+                        stroke-dasharray="${circumference}" stroke-dashoffset="${dashoffset}"
+                        style="transition: stroke-dashoffset 1s ease"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-3xl font-black headline" style="color:${scoreColor}">${p.trust_score}</span>
+                    <span class="text-[9px] text-on-surface-variant uppercase">${p.risk} Risk</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Process Stats -->
+        <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+            <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Process Stats</h3>
+            <div class="space-y-4">
+                <div><p class="text-[10px] text-on-surface-variant">Memory</p><p class="text-lg font-bold text-on-surface">${p.memory_mb} MB</p></div>
+                <div><p class="text-[10px] text-on-surface-variant">CPU</p><p class="text-lg font-bold text-on-surface">${p.cpu_percent}%</p></div>
+                <div><p class="text-[10px] text-on-surface-variant">Connections</p><p class="text-lg font-bold text-on-surface">${p.connection_count}</p></div>
+            </div>
+        </div>
+
+        <!-- Behavior Flags -->
+        <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+            <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Behavior Flags</h3>
+            <div class="space-y-2">${reasons}</div>
+        </div>
+    </div>
+
+    <!-- Connections Table -->
+    <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+        <h3 class="text-xs font-bold text-on-surface mb-4">Active Connections</h3>
+        <table class="w-full text-[11px]">
+            <thead><tr class="border-b border-outline-variant/20 text-on-surface-variant">
+                <th class="text-left py-2 px-2">Destination</th>
+                <th class="text-left py-2 px-2">Port</th>
+                <th class="text-left py-2 px-2">Protocol</th>
+                <th class="text-left py-2 px-2">Status</th>
+            </tr></thead>
+            <tbody>${conns}</tbody>
+        </table>
+    </div>`;
+}
+
+document.getElementById('proc-search').addEventListener('input', (e) => {
+    renderProcessList(e.target.value);
+});
+
+// Refresh on interval
+loadProcesses();
+setInterval(loadProcesses, 5000);
+</script>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% set active_page = "Simulator" %}
+{% block title %}NetShield AI | Threat Simulator{% endblock %}
+
+{% block content %}
+<div class="flex-1 pt-20 pb-8 px-8 space-y-6">
+    <div>
+        <h1 class="text-2xl font-black headline text-on-surface">Threat Simulator</h1>
+        <p class="text-xs text-on-surface-variant mt-1">Test your detection pipeline with simulated attack vectors</p>
+    </div>
+
+    <!-- Attack Vector Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="scenario-cards">
+        <div onclick="startSim('c2_beaconing')" class="glass-card rounded-2xl p-5 border border-outline-variant/10 cursor-pointer hover:border-[#00F2FF]/30 hover:shadow-[0_0_20px_rgba(0,242,255,0.1)] transition-all group">
+            <div class="w-12 h-12 bg-[#00F2FF]/10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-[#00F2FF]" style="font-variation-settings:'FILL' 1;">podcasts</span>
+            </div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">C2 Beaconing</h3>
+            <p class="text-[10px] text-on-surface-variant leading-relaxed">Simulated outbound heartbeats to a remote C&C server using DNS tunneling</p>
+            <div class="mt-3 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#ffb4ab]"></span>
+                <span class="text-[9px] text-[#ffb4ab] font-bold">HIGH RISK</span>
+            </div>
+        </div>
+        <div onclick="startSim('data_exfiltration')" class="glass-card rounded-2xl p-5 border border-outline-variant/10 cursor-pointer hover:border-[#7000FF]/30 hover:shadow-[0_0_20px_rgba(112,0,255,0.1)] transition-all group">
+            <div class="w-12 h-12 bg-[#7000FF]/10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-[#D1BCFF]" style="font-variation-settings:'FILL' 1;">cloud_upload</span>
+            </div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Data Exfiltration</h3>
+            <p class="text-[10px] text-on-surface-variant leading-relaxed">Large volume data transfer via encrypted HTTPS POST to external drop server</p>
+            <div class="mt-3 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#ffb4ab]"></span>
+                <span class="text-[9px] text-[#ffb4ab] font-bold">CRITICAL</span>
+            </div>
+        </div>
+        <div onclick="startSim('port_scanning')" class="glass-card rounded-2xl p-5 border border-outline-variant/10 cursor-pointer hover:border-[#FF8E3C]/30 hover:shadow-[0_0_20px_rgba(255,142,60,0.1)] transition-all group">
+            <div class="w-12 h-12 bg-[#FF8E3C]/10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-[#FF8E3C]" style="font-variation-settings:'FILL' 1;">travel_explore</span>
+            </div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Port Scanning</h3>
+            <p class="text-[10px] text-on-surface-variant leading-relaxed">Internal recon targeting sensitive service ports across subnet</p>
+            <div class="mt-3 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#FF8E3C]"></span>
+                <span class="text-[9px] text-[#FF8E3C] font-bold">MEDIUM</span>
+            </div>
+        </div>
+        <div onclick="startSim('unauthorized_process')" class="glass-card rounded-2xl p-5 border border-outline-variant/10 cursor-pointer hover:border-[#ffb4ab]/30 hover:shadow-[0_0_20px_rgba(255,180,171,0.1)] transition-all group">
+            <div class="w-12 h-12 bg-[#ffb4ab]/10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-[#ffb4ab]" style="font-variation-settings:'FILL' 1;">bug_report</span>
+            </div>
+            <h3 class="text-sm font-bold text-on-surface mb-1">Process Injection</h3>
+            <p class="text-[10px] text-on-surface-variant leading-relaxed">Shellcode injection into legitimate system processes with persistence</p>
+            <div class="mt-3 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#ffb4ab]"></span>
+                <span class="text-[9px] text-[#ffb4ab] font-bold">CRITICAL</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Output + Trust Gauge -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Terminal Output -->
+        <div class="lg:col-span-2 glass-card rounded-2xl p-6 border border-outline-variant/10">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-sm font-bold text-on-surface">Simulation Terminal</h2>
+                    <span class="text-[10px] font-medium px-2 py-0.5 rounded-full" id="sim-status-badge">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-outline-variant mr-1"></span>Idle
+                    </span>
+                </div>
+                <button onclick="stopSim()" id="stop-btn" class="px-4 py-2 bg-[#ffb4ab]/10 text-[#ffb4ab] text-[10px] font-bold rounded-lg hover:bg-[#ffb4ab]/20 transition-all hidden">
+                    <span class="material-symbols-outlined text-xs mr-1">stop</span>Stop
+                </button>
+            </div>
+            <div class="bg-[#0B0E14] rounded-xl p-4 h-80 overflow-y-auto font-mono text-[11px] leading-relaxed" id="sim-terminal">
+                <div class="text-on-surface-variant">NetShield AI Threat Simulator v2.0</div>
+                <div class="text-on-surface-variant">──────────────────────────────────</div>
+                <div class="text-primary-container">Ready. Select an attack vector above to begin.</div>
+            </div>
+        </div>
+
+        <!-- Trust Score Gauge -->
+        <div class="glass-card rounded-2xl p-6 border border-outline-variant/10 flex flex-col items-center">
+            <h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Live Trust Score</h3>
+            <div class="relative mb-4">
+                <svg class="w-40 h-40 -rotate-90" viewBox="0 0 160 160">
+                    <circle cx="80" cy="80" r="68" fill="none" stroke="#32353C" stroke-width="10"/>
+                    <circle id="trust-gauge" cx="80" cy="80" r="68" fill="none" stroke="#00F2FF" stroke-width="10" stroke-linecap="round"
+                        stroke-dasharray="427.26" stroke-dashoffset="17.09"
+                        style="transition: stroke-dashoffset 0.5s ease, stroke 0.3s ease"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-4xl font-black headline text-[#00F2FF]" id="trust-value">96</span>
+                    <span class="text-[9px] text-on-surface-variant uppercase">Trust</span>
+                </div>
+            </div>
+            <div class="w-full space-y-2 mt-2" id="detection-preview">
+                <div class="text-center text-[10px] text-on-surface-variant">Detection data will appear during simulation</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const circumference = 2 * Math.PI * 68;
+
+async function startSim(scenario) {
+    const terminal = document.getElementById('sim-terminal');
+    terminal.innerHTML = `<div class="text-primary-container">Initializing ${scenario} simulation...</div>`;
+    document.getElementById('stop-btn').classList.remove('hidden');
+
+    try {
+        const res = await fetch('/api/simulate/start', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({scenario})
+        });
+        const data = await res.json();
+        if (data.error) showToast(data.error, 'error');
+    } catch(e) { showToast('Failed to start simulation', 'error'); }
+}
+
+async function stopSim() {
+    await fetch('/api/simulate/stop', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    document.getElementById('stop-btn').classList.add('hidden');
+}
+
+socket.on('simulation_status', (data) => {
+    const badge = document.getElementById('sim-status-badge');
+    if (data.active) {
+        badge.innerHTML = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-[#ffb4ab] mr-1 animate-pulse"></span>Active: ' + data.name;
+        badge.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#ffb4ab]/10 text-[#ffb4ab]';
+    } else {
+        badge.innerHTML = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-outline-variant mr-1"></span>Idle';
+        badge.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-surface-container-low text-on-surface-variant';
+        document.getElementById('stop-btn').classList.add('hidden');
+    }
+});
+
+socket.on('simulation_log', (log) => {
+    const terminal = document.getElementById('sim-terminal');
+    const colors = { alert: '#ffb4ab', system: '#00F2FF', data: '#D1BCFF', info: '#B9CACB' };
+    const color = colors[log.type] || '#B9CACB';
+
+    const line = document.createElement('div');
+    line.style.color = color;
+    line.innerHTML = `<span class="text-on-surface-variant/50">${log.timestamp}</span> ${log.message}`;
+    terminal.appendChild(line);
+    terminal.scrollTop = terminal.scrollHeight;
+});
+
+socket.on('simulation_trust', (data) => {
+    const score = data.score;
+    const color = score >= 70 ? '#00F2FF' : score >= 40 ? '#FF8E3C' : '#ffb4ab';
+    const offset = circumference - (score / 100) * circumference;
+
+    const gauge = document.getElementById('trust-gauge');
+    gauge.setAttribute('stroke-dashoffset', offset);
+    gauge.setAttribute('stroke', color);
+
+    const val = document.getElementById('trust-value');
+    val.textContent = score;
+    val.style.color = color;
+});
+</script>
+{% endblock %}

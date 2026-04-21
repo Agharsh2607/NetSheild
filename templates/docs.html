@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% set active_page = "Docs" %}
+{% block title %}NetShield AI | Documentation{% endblock %}
+
+{% block content %}
+<div class="flex-1 pt-20 pb-8 px-8 flex gap-6">
+    <!-- Sidebar TOC -->
+    <aside class="w-56 flex-shrink-0 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto hidden lg:block">
+        <h2 class="text-[10px] font-bold text-primary-container uppercase tracking-widest mb-4">Documentation</h2>
+        <nav class="space-y-1">
+            {% set toc = [
+                ('#overview', 'Overview'),
+                ('#architecture', 'Architecture'),
+                ('#detection', 'Detection Pipeline'),
+                ('#trust', 'Trust Score Engine'),
+                ('#mitigation', 'Mitigation Actions'),
+                ('#simulator', 'Threat Simulator'),
+                ('#api', 'API Reference'),
+                ('#websocket', 'WebSocket Events'),
+            ] %}
+            {% for href, label in toc %}
+            <a class="block text-[11px] py-1.5 px-3 rounded-lg text-on-surface-variant hover:text-primary-container hover:bg-surface-container-low/40 transition-all" href="{{ href }}">{{ label }}</a>
+            {% endfor %}
+        </nav>
+    </aside>
+
+    <!-- Content -->
+    <div class="flex-1 max-w-4xl space-y-12">
+        <!-- Overview -->
+        <section id="overview">
+            <h1 class="text-3xl font-black headline text-on-surface mb-4">NetShield AI Documentation</h1>
+            <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+                <p class="text-sm text-on-surface-variant leading-relaxed mb-4">
+                    <strong class="text-on-surface">NetShield AI</strong> is a behavior-aware network detection and response system. Unlike traditional monitoring tools, it doesn't just show you traffic — it maps connections to processes, assigns dynamic trust scores, generates explainable alerts, and provides one-click mitigation.
+                </p>
+                <div class="grid grid-cols-3 gap-4 mt-6">
+                    <div class="bg-surface-container-low rounded-xl p-4 text-center">
+                        <span class="material-symbols-outlined text-2xl text-[#00F2FF] mb-2" style="font-variation-settings:'FILL' 1;">search</span>
+                        <p class="text-xs font-bold text-on-surface">Detect</p>
+                    </div>
+                    <div class="bg-surface-container-low rounded-xl p-4 text-center">
+                        <span class="material-symbols-outlined text-2xl text-[#7000FF] mb-2" style="font-variation-settings:'FILL' 1;">lightbulb</span>
+                        <p class="text-xs font-bold text-on-surface">Explain</p>
+                    </div>
+                    <div class="bg-surface-container-low rounded-xl p-4 text-center">
+                        <span class="material-symbols-outlined text-2xl text-[#4CAF50] mb-2" style="font-variation-settings:'FILL' 1;">shield</span>
+                        <p class="text-xs font-bold text-on-surface">Respond</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture -->
+        <section id="architecture">
+            <h2 class="text-xl font-black headline text-on-surface mb-4">System Architecture</h2>
+            <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+                <div class="bg-[#0B0E14] rounded-xl p-6 font-mono text-[11px] text-on-surface-variant leading-loose overflow-x-auto">
+<pre class="text-[#00F2FF]">
+┌─────────────────────────────────────────────────────────────┐
+│                    NetShield AI Architecture                 │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ┌─────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│   │   psutil     │───▶│  Trust Score  │───▶│    Alert     │  │
+│   │  Net Monitor │    │   Engine      │    │  Generator   │  │
+│   └─────────────┘    └──────────────┘    └──────┬───────┘  │
+│         │                    │                   │          │
+│         ▼                    ▼                   ▼          │
+│   ┌─────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│   │  Process     │    │  Behavioral   │    │  Mitigation  │  │
+│   │  Mapper      │    │  Analysis     │    │  Engine      │  │
+│   └─────────────┘    └──────────────┘    └──────────────┘  │
+│                                                             │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │              Flask + SocketIO Server                  │  │
+│   │     WebSocket Events ─── REST API ─── Templates      │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                                                             │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │          Frontend (Tailwind CSS + Socket.IO)         │  │
+│   │  Dashboard │ Alerts │ Intel │ Simulator │ Reports    │  │
+│   └─────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detection Pipeline -->
+        <section id="detection">
+            <h2 class="text-xl font-black headline text-on-surface mb-4">Detection Pipeline</h2>
+            <div class="glass-card rounded-2xl p-6 border border-outline-variant/10 space-y-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-[#00F2FF]/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-xs font-bold text-[#00F2FF]">1</span></div>
+                    <div><h3 class="text-sm font-bold text-on-surface">Connection Capture</h3><p class="text-xs text-on-surface-variant mt-1"><code class="bg-surface-container-highest px-1.5 py-0.5 rounded text-[#adc6ff]">psutil.net_connections(kind='inet')</code> scans all active TCP/UDP connections every 3 seconds. Each connection is mapped to its owning process via PID.</p></div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-[#7000FF]/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-xs font-bold text-[#D1BCFF]">2</span></div>
+                    <div><h3 class="text-sm font-bold text-on-surface">Process Enrichment</h3><p class="text-xs text-on-surface-variant mt-1">For each PID, we extract: process name, executable path, memory usage, CPU %. We check the path against known-safe lists and flag temp-directory executables.</p></div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-[#FF8E3C]/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-xs font-bold text-[#FF8E3C]">3</span></div>
+                    <div><h3 class="text-sm font-bold text-on-surface">Trust Scoring</h3><p class="text-xs text-on-surface-variant mt-1">Each process receives a 0-100 trust score based on: identity verification, destination IP reputation, suspicious port usage, data volume anomalies, and connection frequency.</p></div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-[#ffb4ab]/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"><span class="text-xs font-bold text-[#ffb4ab]">4</span></div>
+                    <div><h3 class="text-sm font-bold text-on-surface">Alert Generation</h3><p class="text-xs text-on-surface-variant mt-1">Processes with trust scores below 70 generate explainable alerts with severity levels, human-readable reasons, and suggested remediation actions.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trust Score Engine -->
+        <section id="trust">
+            <h2 class="text-xl font-black headline text-on-surface mb-4">Trust Score Engine</h2>
+            <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+                <p class="text-xs text-on-surface-variant mb-4">Every process starts at 100 and loses points based on:</p>
+                <table class="w-full text-xs">
+                    <thead><tr class="border-b border-outline-variant/20 text-on-surface-variant">
+                        <th class="text-left py-2 font-medium">Factor</th>
+                        <th class="text-left py-2 font-medium">Penalty</th>
+                        <th class="text-left py-2 font-medium">Example</th>
+                    </tr></thead>
+                    <tbody class="text-on-surface">
+                        <tr class="border-b border-outline-variant/5"><td class="py-2">Unknown process name</td><td class="py-2 text-[#FF8E3C]">−20</td><td class="py-2 text-on-surface-variant">exfil_svc.exe</td></tr>
+                        <tr class="border-b border-outline-variant/5"><td class="py-2">Running from %TEMP%</td><td class="py-2 text-[#ffb4ab]">−25</td><td class="py-2 text-on-surface-variant">C:\Users\Temp\payload.exe</td></tr>
+                        <tr class="border-b border-outline-variant/5"><td class="py-2">Known bad IP</td><td class="py-2 text-[#ffb4ab]">−30</td><td class="py-2 text-on-surface-variant">45.12.8.21</td></tr>
+                        <tr class="border-b border-outline-variant/5"><td class="py-2">Suspicious port</td><td class="py-2 text-[#FF8E3C]">−15</td><td class="py-2 text-on-surface-variant">Port 4444, 1337</td></tr>
+                        <tr class="border-b border-outline-variant/5"><td class="py-2">High data volume (&gt;100MB)</td><td class="py-2 text-[#FF8E3C]">−10</td><td class="py-2 text-on-surface-variant">Bulk outbound transfer</td></tr>
+                        <tr><td class="py-2">High connection count (&gt;20)</td><td class="py-2 text-[#FF8E3C]">−10</td><td class="py-2 text-on-surface-variant">Port scanning pattern</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Mitigation -->
+        <section id="mitigation">
+            <h2 class="text-xl font-black headline text-on-surface mb-4">Mitigation Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-card rounded-xl p-5 border border-outline-variant/10">
+                    <div class="w-10 h-10 bg-[#ffb4ab]/10 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-[#ffb4ab]">cancel</span></div>
+                    <h3 class="text-sm font-bold text-on-surface mb-1">Terminate Process</h3>
+                    <p class="text-[10px] text-on-surface-variant">Kills the process via <code class="bg-surface-container-highest px-1 rounded text-[#adc6ff]">psutil.Process.terminate()</code></p>
+                    <p class="text-[10px] text-on-surface-variant mt-2"><strong>API:</strong> <code class="bg-surface-container-highest px-1 rounded text-[#adc6ff]">POST /api/action/terminate</code></p>
+                </div>
+                <div class="glass-card rounded-xl p-5 border border-outline-variant/10">
+                    <div class="w-10 h-10 bg-[#FF8E3C]/10 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-[#FF8E3C]">block</span></div>
+                    <h3 class="text-sm font-bold text-on-surface mb-1">Block IP</h3>
+                    <p class="text-[10px] text-on-surface-variant">Adds the IP to an in-memory blocklist. Blocked IPs are excluded from connection results.</p>
+                    <p class="text-[10px] text-on-surface-variant mt-2"><strong>API:</strong> <code class="bg-surface-container-highest px-1 rounded text-[#adc6ff]">POST /api/action/block-ip</code></p>
+                </div>
+                <div class="glass-card rounded-xl p-5 border border-outline-variant/10">
+                    <div class="w-10 h-10 bg-[#4CAF50]/10 rounded-lg flex items-center justify-center mb-3"><span class="material-symbols-outlined text-[#4CAF50]">check_circle</span></div>
+                    <h3 class="text-sm font-bold text-on-surface mb-1">Mark Safe</h3>
+                    <p class="text-[10px] text-on-surface-variant">Whitelists a process PID and removes its alert from the active list.</p>
+                    <p class="text-[10px] text-on-surface-variant mt-2"><strong>API:</strong> <code class="bg-surface-container-highest px-1 rounded text-[#adc6ff]">POST /api/action/mark-safe</code></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulator -->
+        <section id="simulator">
+            <h2 class="text-xl font-black headline text-on-surface mb-4">Threat Simulator</h2>
+            <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+                <p class="text-xs text-on-surface-variant mb-4">The built-in simulator spawns realistic attack patterns that exercise the real detection pipeline:</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-surface-container-low rounded-xl p-4"><h4 class="text-xs font-bold text-on-surface mb-1">C2 Beaconing</h4><p class="text-[10px] text-on-surface-variant">DNS tunneling heartbeats to simulated C&C</p></div>
+                    <div class="bg-surface-container-low rounded-xl p-4"><h4 class="text-xs font-bold text-on-surface mb-1">Data Exfiltration</h4><p class="text-[10px] text-on-surface-variant">Burst HTTPS POST to external drops</p></div>
+                    <div class="bg-surface-container-low rounded-xl p-4"><h4 class="text-xs font-bold text-on-surface mb-1">Port Scanning</h4><p class="text-[10px] text-on-surface-variant">Internal subnet recon across sensitive ports</p></div>
+                    <div class="bg-surface-container-low rounded-xl p-4"><h4 class="text-xs font-bold text-on-surface mb-1">Process Injection</h4><p class="text-[10px] text-on-surface-variant">Shellcode injection with persistence</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API Reference -->
+        <section id="api">
+            <h2 class="text-xl font-black headline text-on-surface mb-4">API Reference</h2>
+            <div class="space-y-3">
+                {% set endpoints = [
+                    ('GET', '/api/status', 'System health and aggregate metrics'),
+                    ('GET', '/api/connections', 'Active network connections'),
+                    ('GET', '/api/processes', 'Process list with trust scores'),
+                    ('GET', '/api/alerts', 'Active alerts'),
+                    ('GET', '/api/trust-scores', 'Trust scores sorted by risk'),
+                    ('GET', '/api/traffic/history', 'Historical traffic data points'),
+                    ('GET', '/api/reports/summary', 'Report KPIs and analytics data'),
+                    ('POST', '/api/action/terminate', 'Terminate a process by PID'),
+                    ('POST', '/api/action/block-ip', 'Block an IP address'),
+                    ('POST', '/api/action/mark-safe', 'Mark a process or alert as safe'),
+                    ('POST', '/api/action/scan', 'Trigger a full system scan'),
+                    ('POST', '/api/simulate/start', 'Start a threat simulation'),
+                    ('POST', '/api/simulate/stop', 'Stop running simulation'),
+                    ('GET', '/api/simulate/scenarios', 'List available simulation scenarios'),
+                ] %}
+                {% for method, path, desc in endpoints %}
+                <div class="glass-card rounded-xl p-4 border border-outline-variant/10 flex items-center gap-4">
+                    <span class="text-[9px] font-bold px-2 py-1 rounded {% if method == 'GET' %}bg-[#00F2FF]/10 text-[#00F2FF]{% else %}bg-[#FF8E3C]/10 text-[#FF8E3C]{% endif %}">{{ method }}</span>
+                    <code class="text-xs font-mono text-[#adc6ff] flex-1">{{ path }}</code>
+                    <span class="text-[10px] text-on-surface-variant">{{ desc }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- WebSocket Events -->
+        <section id="websocket">
+            <h2 class="text-xl font-black headline text-on-surface mb-4">WebSocket Events</h2>
+            <div class="glass-card rounded-2xl p-6 border border-outline-variant/10">
+                <table class="w-full text-xs">
+                    <thead><tr class="border-b border-outline-variant/20 text-on-surface-variant">
+                        <th class="text-left py-2 font-medium">Event</th>
+                        <th class="text-left py-2 font-medium">Direction</th>
+                        <th class="text-left py-2 font-medium">Description</th>
+                    </tr></thead>
+                    <tbody class="text-on-surface">
+                        <tr class="border-b border-outline-variant/5"><td class="py-2 font-mono text-[#adc6ff]">metrics_update</td><td class="py-2">Server → Client</td><td class="py-2 text-on-surface-variant">Aggregated stats every 3s</td></tr>
+                        <tr class="border-b border-outline-variant/5"><td class="py-2 font-mono text-[#adc6ff]">connections_update</td><td class="py-2">Server → Client</td><td class="py-2 text-on-surface-variant">Live connection list</td></tr>
+                        <tr class="border-b border-outline-variant/5"><td class="py-2 font-mono text-[#adc6ff]">trust_scores</td><td class="py-2">Server → Client</td><td class="py-2 text-on-surface-variant">Sorted trust scores</td></tr>
+                        <tr class="border-b border-outline-variant/5"><td class="py-2 font-mono text-[#adc6ff]">traffic_update</td><td class="py-2">Server → Client</td><td class="py-2 text-on-surface-variant">Inbound/outbound count</td></tr>
+                        <tr class="border-b border-outline-variant/5"><td class="py-2 font-mono text-[#adc6ff]">new_alert</td><td class="py-2">Server → Client</td><td class="py-2 text-on-surface-variant">Newly generated alert</td></tr>
+                        <tr class="border-b border-outline-variant/5"><td class="py-2 font-mono text-[#adc6ff]">simulation_log</td><td class="py-2">Server → Client</td><td class="py-2 text-on-surface-variant">Simulator terminal line</td></tr>
+                        <tr><td class="py-2 font-mono text-[#adc6ff]">simulation_trust</td><td class="py-2">Server → Client</td><td class="py-2 text-on-surface-variant">Simulator trust score</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>{% block title %}NetShield AI{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="/static/css/style.css" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "on-error-container":"#ffdad6","surface-variant":"#32353c","surface-container-high":"#272a31",
+                "on-primary-fixed-variant":"#004f54","on-tertiary-container":"#005cc5","on-primary-container":"#006a71",
+                "background":"#10131a","tertiary-fixed":"#d8e2ff","on-error":"#690005","secondary":"#d1bcff",
+                "surface-container-low":"#191c22","on-secondary-fixed":"#23005b","surface-container-lowest":"#0b0e14",
+                "on-primary-fixed":"#002022","error":"#ffb4ab","inverse-primary":"#00696f",
+                "tertiary-fixed-dim":"#adc6ff","outline":"#849495","secondary-fixed-dim":"#d1bcff",
+                "tertiary":"#f7f7ff","surface-bright":"#363940","surface-container-highest":"#32353c",
+                "on-secondary":"#3c0090","on-tertiary":"#002e6a","on-surface-variant":"#b9cacb",
+                "on-secondary-fixed-variant":"#5700c9","on-tertiary-fixed":"#001a42","surface":"#10131a",
+                "tertiary-container":"#cddbff","on-tertiary-fixed-variant":"#004395",
+                "on-secondary-container":"#ddcdff","primary-fixed-dim":"#00dbe7","surface-tint":"#00dbe7",
+                "primary":"#e1fdff","surface-dim":"#10131a","on-surface":"#e1e2eb",
+                "primary-container":"#00f2ff","primary-fixed":"#74f5ff","inverse-surface":"#e1e2eb",
+                "inverse-on-surface":"#2e3037","on-background":"#e1e2eb","secondary-container":"#7000ff",
+                "secondary-fixed":"#e9ddff","outline-variant":"#3a494b","surface-container":"#1d2026",
+                "error-container":"#93000a","on-primary":"#00363a"
+              },
+              fontFamily: {"headline":["Plus Jakarta Sans"],"body":["Inter"],"label":["Inter"]},
+              borderRadius: {"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+            },
+          },
+        }
+    </script>
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-background text-on-surface {% block body_class %}flex min-h-screen overflow-x-hidden{% endblock %}">
+
+{% block sidebar %}
+<!-- Sidebar Nav Rail -->
+<aside class="bg-[#10131A] w-[4.5rem] hover:w-64 transition-all duration-300 h-screen sticky left-0 top-0 flex flex-col items-center py-6 z-50 group shadow-[0_40px_60px_-15px_rgba(87,0,201,0.05)] overflow-hidden">
+    <div class="mb-10 flex items-center px-6 w-full gap-4">
+        <div class="min-w-[2.5rem] h-10 bg-gradient-to-br from-primary-container to-secondary-container rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(0,242,255,0.3)]">
+            <span class="material-symbols-outlined text-on-primary-fixed" style="font-variation-settings:'FILL' 1;">security</span>
+        </div>
+        <a href="/" class="text-xl font-bold text-[#00F2FF] tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap headline no-underline">NetShield AI</a>
+    </div>
+    <nav class="flex flex-col w-full gap-2 px-3">
+        {% set nav_items = [
+            ('/', 'home', 'Home'),
+            ('/dashboard', 'dashboard', 'Dashboard'),
+            ('/alerts', 'notifications', 'Alerts'),
+            ('/intelligence', 'psychology', 'Process Intelligence'),
+            ('/simulator', 'biotech', 'Simulator'),
+            ('/scanner', 'radar', 'Network Scanner'),
+            ('/reports', 'description', 'Reports'),
+            ('/docs', 'menu_book', 'Docs'),
+        ] %}
+        {% for href, icon, label in nav_items %}
+        <a href="{{ href }}" class="flex items-center h-12 rounded-lg transition-all {% if active_page == label %}border-r-2 border-[#74F5FF] bg-gradient-to-r from-[#00F2FF]/10 to-transparent text-[#74F5FF] shadow-[0_0_15px_rgba(116,245,255,0.3)]{% else %}text-[#B9CACB] opacity-60 hover:opacity-100 hover:bg-[#32353C]/20{% endif %}">
+            <div class="min-w-[3rem] flex justify-center relative">
+                <span class="material-symbols-outlined" {% if active_page == label %}style="font-variation-settings:'FILL' 1;"{% endif %}>{{ icon }}</span>
+                {% if label == 'Alerts' %}<span class="absolute top-2 right-3 w-1.5 h-1.5 bg-error rounded-full" id="alert-dot"></span>{% endif %}
+            </div>
+            <span class="text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap ml-2">{{ label }}</span>
+        </a>
+        {% endfor %}
+    </nav>
+    <div class="mt-auto flex items-center px-4 w-full gap-3 pt-6 border-t border-outline-variant/10">
+        <div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary-container">
+            <span class="material-symbols-outlined">person</span>
+        </div>
+        <div class="opacity-0 group-hover:opacity-100 transition-opacity overflow-hidden">
+            <p class="text-[10px] font-bold text-on-surface truncate">Admin</p>
+            <p class="text-[8px] text-[#00F2FF] font-medium tracking-widest uppercase">System: Secure</p>
+        </div>
+    </div>
+</aside>
+{% endblock %}
+
+<!-- Main Content -->
+<main class="flex-1 flex flex-col">
+    <!-- Top App Bar -->
+    {% block topbar %}
+    <header class="bg-[#10131A]/80 backdrop-blur-xl fixed top-0 w-full z-40 flex justify-between items-center px-8 h-16 pl-[6.5rem]">
+        <div class="flex items-center gap-8">
+            <h1 class="text-lg font-black bg-gradient-to-br from-[#00F2FF] to-[#7000FF] bg-clip-text text-transparent headline">NetShield AI</h1>
+            <nav class="hidden md:flex items-center gap-6">
+                <a href="/dashboard" class="{% if active_page == 'Dashboard' %}text-[#00F2FF] font-bold border-b-2 border-[#00F2FF]{% else %}text-[#E1E2EB] opacity-70 hover:text-[#00F2FF]{% endif %} text-xs py-1 transition-all">Dashboard</a>
+                <a href="/alerts" class="{% if active_page == 'Alerts' %}text-[#00F2FF] font-bold border-b-2 border-[#00F2FF]{% else %}text-[#E1E2EB] opacity-70 hover:text-[#00F2FF]{% endif %} text-xs py-1 transition-all">Alerts</a>
+                <a href="/intelligence" class="{% if active_page == 'Process Intelligence' %}text-[#00F2FF] font-bold border-b-2 border-[#00F2FF]{% else %}text-[#E1E2EB] opacity-70 hover:text-[#00F2FF]{% endif %} text-xs py-1 transition-all">Intelligence</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="relative hidden lg:block focus-within:ring-1 ring-[#00F2FF]/30 rounded-full">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                <input class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-1.5 text-xs w-64 focus:ring-0 text-on-surface placeholder-on-surface-variant/50" placeholder="Global system search..." type="text"/>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="/alerts" class="text-on-surface-variant hover:text-[#00F2FF] transition-all relative">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-background" id="notif-dot"></span>
+                </a>
+                <button class="text-on-surface-variant hover:text-[#00F2FF] transition-all">
+                    <span class="material-symbols-outlined">settings</span>
+                </button>
+            </div>
+        </div>
+    </header>
+    {% endblock %}
+
+    <!-- Page Content -->
+    {% block content %}{% endblock %}
+
+    <!-- Footer -->
+    {% block footer %}
+    <footer class="bg-[#0B0E14] w-full py-12 px-8 border-t border-[#3A494B]/20 mt-auto">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-7xl mx-auto">
+            <div>
+                <span class="text-md font-bold text-[#E1E2EB] headline">NetShield AI</span>
+                <p class="text-[10px] text-[#B9CACB] mt-4 leading-relaxed">Advanced heuristic intelligence monitoring for decentralized infrastructure.</p>
+            </div>
+            <div class="flex flex-col gap-2">
+                <h4 class="text-[10px] uppercase tracking-widest text-primary-container font-bold mb-2">Network</h4>
+                <a class="text-[10px] font-medium text-[#B9CACB] hover:text-[#74F5FF] transition-colors uppercase" href="/dashboard">Dashboard</a>
+                <a class="text-[10px] font-medium text-[#B9CACB] hover:text-[#74F5FF] transition-colors uppercase" href="/intelligence">Intelligence</a>
+            </div>
+            <div class="flex flex-col gap-2">
+                <h4 class="text-[10px] uppercase tracking-widest text-primary-container font-bold mb-2">Systems</h4>
+                <a class="text-[10px] font-medium text-[#B9CACB] hover:text-[#74F5FF] transition-colors uppercase" href="/alerts">Security</a>
+                <a class="text-[10px] font-medium text-[#B9CACB] hover:text-[#74F5FF] transition-colors uppercase" href="/reports">Reports</a>
+            </div>
+            <div class="flex flex-col gap-2">
+                <h4 class="text-[10px] uppercase tracking-widest text-primary-container font-bold mb-2">Legal</h4>
+                <a class="text-[10px] font-medium text-[#B9CACB] hover:text-[#74F5FF] transition-colors uppercase" href="#">Privacy</a>
+                <a class="text-[10px] font-medium text-[#B9CACB] hover:text-[#74F5FF] transition-colors uppercase" href="/docs">Docs</a>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto mt-12 pt-8 border-t border-outline-variant/5 flex justify-between items-center">
+            <p class="text-[10px] font-medium text-[#B9CACB]">© 2024 NetShield AI. The Digital Observatory.</p>
+            <div class="flex gap-4">
+                <span class="w-2 h-2 rounded-full bg-primary-container"></span>
+                <span class="w-2 h-2 rounded-full bg-secondary-container"></span>
+                <span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
+<script src="/static/js/app.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
