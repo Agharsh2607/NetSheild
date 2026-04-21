@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  netshield:
+    build: .
+    ports:
+      - "5000:5000"
+    privileged: true  # Required for network monitoring
+    network_mode: host  # Required for packet capture
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    environment:
+      - FLASK_ENV=production
+      - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
+    restart: unless-stopped
+    
+  # Optional: Add a reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - netshield
+    restart: unless-stopped
