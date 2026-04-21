@@ -890,14 +890,30 @@ def handle_process_detail(data):
 
 # ─── Main ────────────────────────────────────────────────────────────────────
 
-if __name__ == '__main__':
-    # Start background monitor
-    socketio.start_background_task(monitor_loop)
+# Check if running on Vercel (serverless environment)
+VERCEL_DEPLOYMENT = os.environ.get('VERCEL') or app.config.get('VERCEL_DEPLOYMENT', False)
 
+if not VERCEL_DEPLOYMENT:
+    # Only start background monitor in non-serverless environments
+    def start_background_monitor():
+        socketio.start_background_task(monitor_loop)
+    
+    # Initialize background monitor when not on Vercel
+    if __name__ == '__main__':
+        start_background_monitor()
+
+if __name__ == '__main__':
     print("\n" + "="*60)
     print("  NetShield AI — Behavior-Aware Network Detection")
     print("  Dashboard: http://localhost:5000/dashboard")
     print("  Landing:   http://localhost:5000/")
     print("="*60 + "\n")
 
+    if VERCEL_DEPLOYMENT:
+        print("  Running in Vercel serverless mode")
+        print("  Note: Real-time monitoring limited in serverless environment")
+    
     socketio.run(app, host='0.0.0.0', port=5000, debug=False, allow_unsafe_werkzeug=True)
+
+# Export app for Vercel
+app_instance = app
